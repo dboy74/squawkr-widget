@@ -1,0 +1,9 @@
+/* Squawkr Waybar module colours — append to ~/.config/waybar/style.css.
+   Flight-category ramp mirrors the app (status.ts): VFR green, MVFR blue, IFR red, LIFR magenta,
+   unknown/stale grey (never coloured as an answer). */
+#custom-squawkr { padding: 0 10px; font-family: "IBM Plex Mono", monospace; }
+#custom-squawkr.vfr     { color: #3ab276; }
+#custom-squawkr.mvfr    { color: #2e90fa; }
+#custom-squawkr.ifr     { color: #db4444; }
+#custom-squawkr.lifr    { color: #965ac0; }
+#custom-squawkr.unknown { color: #9294a0; }

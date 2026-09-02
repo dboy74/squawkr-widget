@@ -1,0 +1,17 @@
+Copyright © 2026 RW 03 AB (Visby, Sweden). All rights reserved.
+
+This repository is currently PRIVATE and pre-release. No licence to use, copy,
+modify, or distribute it is granted yet.
+
+BEFORE THIS REPOSITORY IS MADE PUBLIC, a distribution licence must be chosen.
+The intended shape is a permissive open-source licence (for example MIT) for the
+code, with the "Squawkr" name and the Squawkr mark (the swoosh logo in
+omarchy-plugin/squawkr/squawkr-mark.svg) RESERVED as trademarks and not covered
+by that licence.
+
+The "Squawkr" name and mark are trademarks of RW 03 AB and may not be used in a
+way that implies endorsement by, or affiliation with, RW 03 AB.
+
+The airspace and weather data surfaced by this widget comes from third parties
+(including LFV and aviationweather.gov) under their own terms; this widget is not
+an official flight-briefing source.

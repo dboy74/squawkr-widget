@@ -1,0 +1,8 @@
+# Runtime / per-install state (never checked in)
+*.bak.*
+plugin-token
+.DS_Store
+
+# Editor / OS cruft
+*.swp
+*~

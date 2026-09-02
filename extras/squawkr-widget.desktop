@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Squawkr
+Comment=Restriction-area status + airfield weather — home field and up to three you track
+Exec=SQUAWKR_LAUNCH_PLACEHOLDER
+Icon=weather-few-clouds
+Terminal=false
+Categories=Utility;Network;
+StartupWMClass=squawkr-widget

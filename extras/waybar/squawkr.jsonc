@@ -1,0 +1,12 @@
+// Squawkr Waybar custom module. Merge this "custom/squawkr" object into your ~/.config/waybar/
+// config's module map, and add "custom/squawkr" to one of the "modules-left/center/right" arrays.
+// Colour comes from the returned class (vfr/mvfr/ifr/lifr/unknown) — see squawkr.css.
+{
+  "custom/squawkr": {
+    "exec": "~/.local/bin/squawkr-status.sh",
+    "return-type": "json",
+    "interval": 90,
+    "on-click": "~/.local/bin/squawkr-widget-launch.sh",
+    "tooltip": true
+  }
+}
