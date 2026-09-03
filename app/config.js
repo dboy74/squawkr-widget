@@ -37,6 +37,7 @@ window.SQUAWKR_CONFIG = {
     { name: "US \u00b7 White Sands / NM", bbox: [-107.3, 31.9, -105.0, 34.2] },
     { name: "US \u00b7 Eglin / Gulf", bbox: [-87.7, 29.4, -85.2, 31.2] },
     { name: "US \u00b7 Virginia Capes", bbox: [-76.8, 36.3, -74.5, 38.2] },
+    { name: "US \u00b7 San Diego / coastal", bbox: [-119.6, 32.0, -116.8, 34.2] },
   ],
 
   // localStorage keys
