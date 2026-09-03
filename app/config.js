@@ -29,6 +29,14 @@ window.SQUAWKR_CONFIG = {
   // (the US arrives when the FAA production feed is live). Boxes are [minLon,minLat,maxLon,maxLat].
   ACTIVATION_COVERAGE: [
     { name: "Sweden", bbox: [10.5, 55.0, 24.5, 69.2] },
+    // United States — the mirrored SUA regions. Must match the backend US_REGIONS boxes
+    // (packages/proxy/src/sources/faa/regions.ts); outside these, US areas stay "zone only".
+    { name: "US \u00b7 SoCal ranges", bbox: [-119.5, 34.0, -116.8, 36.4] },
+    { name: "US \u00b7 Nevada NTTR", bbox: [-117.6, 36.3, -114.9, 38.6] },
+    { name: "US \u00b7 Arizona", bbox: [-114.6, 31.9, -112.0, 34.1] },
+    { name: "US \u00b7 White Sands / NM", bbox: [-107.3, 31.9, -105.0, 34.2] },
+    { name: "US \u00b7 Eglin / Gulf", bbox: [-87.7, 29.4, -85.2, 31.2] },
+    { name: "US \u00b7 Virginia Capes", bbox: [-76.8, 36.3, -74.5, 38.2] },
   ],
 
   // localStorage keys
