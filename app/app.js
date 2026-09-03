@@ -213,7 +213,7 @@ function drawResults() {
   if (!searchResults.length) { ul.innerHTML = `<li class="emptymsg" style="cursor:default">Type to search…</li>`; return; }
   ul.innerHTML = searchResults.map((r, i) => {
     if (r._zone) {
-      const col = { active: "#e06c6c", sched: "#e0b34a", none: "#6fce9a", unknown: "#9294a0" }[r.status] || "#9294a0";
+      const col = { active: "#e06c6c", sched: "#e0b34a", none: "#6fce9a", unknown: "#9294a0", geo: "#7c8caa" }[r.status] || "#9294a0";
       return `<li data-i="${i}" class="${i === searchSel ? "sel" : ""}"><span class="zdot" style="background:${col}"></span><span class="code">${R.esc(r.desig)}</span><span class="nm">${R.esc(r.name || "")}</span><span class="sub">${R.esc((r.lo || "GND") + "–" + (r.hi || "UNL"))}</span></li>`;
     }
     return `<li data-i="${i}" class="${i === searchSel ? "sel" : ""}"><span class="code">${R.esc(r.icao)}</span><span class="nm">${R.esc(r.name || "")}</span>${r.iata ? `<span class="sub">${R.esc(r.iata)}</span>` : ""}</li>`;

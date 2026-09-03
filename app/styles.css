@@ -89,6 +89,9 @@
   .hlbl{fill:#9fb0e6;font:600 12px var(--mono)} .hlbl.hi{fill:#c7cdf2} .hlbl.lo{fill:#6b7089;font-weight:400;font-size:11px}
   .norep{color:var(--mut);font-size:13px;line-height:1.5}
   .norep b{color:var(--val);font-weight:500}
+  .geonote{color:var(--mut);font-size:12.5px;line-height:1.55;border-left:2px solid #4a536e;
+    padding-left:10px;margin-top:2px}
+  .geonote b{color:var(--val);font-weight:500} .geonote em{color:#aab2cc;font-style:normal}
   .rwylist{margin-top:12px} .rwylist .dr .dv{color:var(--ink)}
   .dfoot{display:flex;justify-content:flex-end;margin-top:10px;padding-top:9px;border-top:1px solid #20233a}
   .dfoot--split{justify-content:space-between;align-items:baseline} .dfoot--split .meta{margin:0}

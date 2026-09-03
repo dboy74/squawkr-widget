@@ -140,8 +140,11 @@ export function heroAf(a) {
     <div class="meta">obs ${esc(a.obs || a.age || "—")} · vis ${esc(a.vis ?? "—")} SM · dew ${a.dew ?? "—"}°C</div>`;
 }
 
-const ZCOL = { active: [224, 108, 108], sched: [224, 179, 74], none: [111, 206, 154], unknown: [146, 148, 156], geo: [106, 160, 255] };
-const ZWORD = { active: "ACTIVE", sched: "SCHEDULED", none: "CLEAR", unknown: "UNKNOWN", geo: "GEOMETRY" };
+// active/sched/none are the real status ramp (red/amber/green). unknown = we should know but our
+// data is too stale. geo = "zone only": we have no activation feed for this territory, so we show
+// geometry only — a deliberately neutral, non-status colour so it can never read as an answer.
+const ZCOL = { active: [224, 108, 108], sched: [224, 179, 74], none: [111, 206, 154], unknown: [146, 148, 156], geo: [124, 140, 170] };
+const ZWORD = { active: "ACTIVE", sched: "SCHEDULED", none: "CLEAR", unknown: "UNKNOWN", geo: "ZONE ONLY" };
 const zicon = (sz = 64) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M32 8 54 20v18c0 12-9 18-22 22C19 56 10 50 10 38V20z"/><path d="M24 33l6 6 12-13" stroke-width="2"/></svg>`;
 const fieldicon = (sz = 30) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="27" y="10" width="10" height="44" rx="3"/><line x1="32" y1="16" x2="32" y2="48" stroke-dasharray="3 6"/></svg>`;
 
@@ -169,11 +172,12 @@ export function mini(it, isHome = false) {
       <div class="msub">${relArrow(it.rwy, it.wdir)} ${it.wspd}kt${isHome ? " · home" : ""}</div></div>`;
   }
   const col = rgb(ZCOL[it.status] || [146, 148, 156]);
+  const msub = it.status === "geo" ? "boundary + limits only" : esc(it.when || "tracked area");
   return `<div class="${cls}" data-go="${tgt}">${rmBtn}
     <div class="micon" style="color:${col}">${zicon(28)}</div>
     <div class="mid"><b>${it.desig}</b><span class="mlbl">${esc(it.name || "")}</span></div>
     <div class="mval" style="color:${col}">${ZWORD[it.status] || "—"}</div>
-    <div class="msub">${esc(it.when || "tracked area")}</div></div>`;
+    <div class="msub">${msub}</div></div>`;
 }
 
 // ---- detail views --------------------------------------------------------------------------
@@ -268,6 +272,27 @@ function weekDates() {
 }
 
 export function detailZn(z) {
+  // Zone-only: a territory we hold no activation feed for. Show the boundary's vertical extent,
+  // but replace the whole activation schedule with an explicit "we don't provide status here" —
+  // never a week grid or a "no activation this week", which would imply we know it's clear.
+  if (z.status === "geo") {
+    const col = rgb(ZCOL.geo);
+    return `<div class="panel detail" id="d-${z.id}" hidden>
+      <div class="dhead"><button class="back" data-back>‹ back</button>
+        <span class="dtitle"><b>${z.desig}</b> · <span class="tsub">${esc(z.name || "")}</span></span>
+        <span class="pill" style="color:${col};border-color:${col}55">${ZWORD.geo}</span></div>
+      <div class="zbody">
+        <div class="hmeterbox">${heightMeter(z, col)}<div class="fcap">vertical extent</div></div>
+        <div class="zright">
+          <div class="zup"><span class="lbl">COVERAGE</span>zone only</div>
+          <div class="geonote"><b>We show this airspace's boundary and limits only.</b>
+            We don't provide its activation status in this territory yet — treat it as
+            <em>status unknown</em> and check an official source before you fly.</div>
+        </div>
+      </div>
+      ${reportFoot(reportHrefZn(z))}
+    </div>`;
+  }
   const col = rgb(ZCOL[z.status] || [146, 148, 156]);
   const days = weekDates();
   const todayStr = new Date().toISOString().slice(0, 10);

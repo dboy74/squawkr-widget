@@ -192,19 +192,35 @@ function _centroid(g) {
   return { lon: sx / pts.length, lat: sy / pts.length }; // GeoJSON is [lon, lat]
 }
 
+// Do we have an activation feed for wherever this zone sits? Covered → we may show a real
+// status; not covered (or we can't locate it) → "zone only": boundary + limits, no status.
+// The covered-territory list lives in config (C.ACTIVATION_COVERAGE) so it's a one-line change
+// to add a territory once its feed goes live.
+function _inCoverage(lat, lon) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false; // can't locate → don't claim status
+  for (const t of C.ACTIVATION_COVERAGE || []) {
+    const b = t.bbox || t; // [minLon,minLat,maxLon,maxLat]
+    if (lon >= b[0] && lon <= b[2] && lat >= b[1] && lat <= b[3]) return true;
+  }
+  return false;
+}
+
 function _zone(feature, bbox) {
   const p = feature.properties || {};
-  const st = _zoneStatus(p);
-  const { week, when } = _weekAndLabel(p.current, p.next);
   const c = _centroid(feature.geometry);
+  const covered = _inCoverage(c.lat, c.lon);
+  // Outside a covered territory we deliberately do NOT trust or surface any activation status the
+  // upstream may carry — we show geometry only. "geo" renders as a neutral, non-status treatment.
+  const st = covered ? _zoneStatus(p) : "geo";
+  const { week, when } = covered ? _weekAndLabel(p.current, p.next) : { week: null, when: null };
   return {
     kind: "zn", desig: p.designator || p.id || "?",
     name: (p.name || "").replace(/\w\S*/g, (t) => t[0].toUpperCase() + t.slice(1).toLowerCase()),
-    status: st, lo: _alt(p.lower), hi: _alt(p.upper),
+    status: st, covered, lo: _alt(p.lower), hi: _alt(p.upper),
     when, week, age: "live", id: p.id, bbox: bbox || C.SEED_BBOX,
     lat: c.lat, lon: c.lon,
-    sched_text: (p.current || p.next || {}).schedule,
-    current: p.current, next: p.next,
+    sched_text: covered ? (p.current || p.next || {}).schedule : null,
+    current: covered ? p.current : null, next: covered ? p.next : null,
   };
 }
 

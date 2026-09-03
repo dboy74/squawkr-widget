@@ -20,6 +20,11 @@ service for the rest.
 > **Not an official flight-briefing source.** Squawkr is an at-a-glance convenience, not a substitute
 > for a briefing. Always verify restriction-area activation via **LFV AROWeb** (<https://aro.lfv.se>)
 > and on-site signage, and weather from official METAR/TAF, before you fly.
+>
+> **Coverage:** weather and airfield data are worldwide. Live restriction-area **activation status**
+> is currently **Sweden only** (the United States follows once its official feed is live). Outside a
+> covered territory the widget shows an airspace's **boundary and vertical limits only** — clearly
+> marked *zone only*, never a red/amber/green status — because it has no activation feed there.
 
 ---
 
@@ -29,7 +34,8 @@ service for the rest.
 - A **home airfield** at the top — condition, wind (bearing + strength), favoured runway with
   crosswind, QNH — and up to three **tracked** airfields / restriction areas below.
 - **Airfield detail:** a 2-D runway with a wind chevron + sky interpretation.
-- **Restriction-area detail:** a vertical-limits meter + the week's activation schedule.
+- **Restriction-area detail:** a vertical-limits meter + the week's activation schedule where we
+  have a status feed (Sweden today), or a plain *zone only* boundary-and-limits view where we don't.
 - **Keyboard:** `a` add · `h` set home · `x` remove · `↵` open · `Esc` back.
 - A subtle link to the full service for everything the free teaser doesn't cover.
 

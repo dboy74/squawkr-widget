@@ -21,6 +21,16 @@ window.SQUAWKR_CONFIG = {
   MAX_TRACKED: 3,
   SERVICE_URL: "https://squawkr.net", // the "full service" nudge target
 
+  // Territories where we have a trustworthy restriction-area ACTIVATION feed and may therefore
+  // show a real active/scheduled/clear status. A zone whose centroid falls OUTSIDE every box
+  // here — or whose location we can't determine — is shown "zone only": its boundary and
+  // vertical limits, but explicitly NOT an activation status (never a status colour). This is
+  // the honesty rule from docs/data-strategy.md §7. Extend the list as coverage lands
+  // (the US arrives when the FAA production feed is live). Boxes are [minLon,minLat,maxLon,maxLat].
+  ACTIVATION_COVERAGE: [
+    { name: "Sweden", bbox: [10.5, 55.0, 24.5, 69.2] },
+  ],
+
   // localStorage keys
   LS_TOKEN: "squawkr.plugin.token",
   LS_PREFS: "squawkr.widget.prefs",
