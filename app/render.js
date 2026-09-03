@@ -71,6 +71,15 @@ const condIcon = (cat, sz = 64) => ({ CAVOK: sun, VFR: partly, MVFR: cloud, IFR:
 
 export const hasWx = (a) => !!a.raw_metar;
 
+// Standard placeholder copy for missing weather — defined once so the wording stays identical
+// across the hero, the mini cards and the detail views. Observation (METAR) and forecast (TAF)
+// can be missing independently. Missing data must read as "we don't know", never as "all clear".
+export const WX_TEXT = {
+  noReport: "no report",                                 // compact — mini card / hero label
+  noMetar: "No current weather report for this field.",  // detail: no observation
+  noTaf: "No forecast available.",                        // detail: no forecast (TAF)
+};
+
 // ---- vertical runway strip with an animated wind chevron -----------------------------------
 function runwaySvg(a) {
   let chevs = "", num;
@@ -125,6 +134,16 @@ const stat = (label, main, sub = "") =>
   `<div class="stat"><div class="lbl">${label}</div><div class="val">${main}</div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
 
 export function heroAf(a) {
+  // No observation: show the field, a neutral "no report" mark and standard text — never the
+  // wind/runway/QNH stats, which would otherwise render as a misleading 0° · 0 kt.
+  if (!hasWx(a)) {
+    return `<div class="hero click" data-go="d-${a.icao}">
+      <div class="cond" style="color:#5a608a">${fieldicon(56)}<span class="condlbl">NO REPORT</span></div>
+      <div class="headline"><div class="afname">${esc(a.name)}</div>
+        <div class="subl">${a.icao}<span class="home">HOME</span></div>
+        <div class="norep norep--hero">${WX_TEXT.noMetar}</div></div></div>
+    <div class="meta">no current METAR for this field</div>`;
+  }
   const { xw } = comps(a.rwy, a.wdir, a.wspd);
   const { end: rec } = recommend(a.rwy, a.wdir);
   const col = rgb(a.catc);
@@ -183,6 +202,14 @@ export function mini(it, isHome = false) {
 // ---- detail views --------------------------------------------------------------------------
 const drow = (l, v) => `<div class="dr"><span class="lbl">${l}</span><span class="dv">${v}</span></div>`;
 
+// Forecast (TAF) block for the airfield detail. The raw TAF when we have it; standard text when
+// we don't — shown independently of the METAR, since a field can have one without the other.
+const forecastBlock = (a) =>
+  `<div class="fcast"><div class="flabel">FORECAST</div>` +
+  (a.raw_taf ? `<div class="raw">${esc(a.raw_taf)}</div>`
+             : `<div class="norep norep--sm">${WX_TEXT.noTaf}</div>`) +
+  `</div>`;
+
 export function detailAf(a) {
   if (!hasWx(a)) {
     const rws = a.runways || [];
@@ -200,6 +227,7 @@ export function detailAf(a) {
           <div class="rwylist">${rwl}</div>
         </div>
       </div>
+      ${forecastBlock(a)}
       ${reportFoot(reportHrefAf(a.icao))}
     </div>`;
   }
@@ -224,6 +252,7 @@ export function detailAf(a) {
           ${drow("CLOUD", cloudsText(a))}
         </div>
       </div>
+      ${forecastBlock(a)}
       <div class="dfoot dfoot--split"><span class="meta">obs ${esc(a.obs || "—")}</span>${reportAnchor(reportHrefAf(a.icao))}</div>
     </div>`;
 }

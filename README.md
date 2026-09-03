@@ -25,6 +25,10 @@ service for the rest.
 > is currently **Sweden only** (the United States follows once its official feed is live). Outside a
 > covered territory the widget shows an airspace's **boundary and vertical limits only** — clearly
 > marked *zone only*, never a red/amber/green status — because it has no activation feed there.
+>
+> **Missing weather:** when a field has no current observation it reads **"no report"**, and with no
+> forecast, **"No forecast available."** Missing data is always shown as unknown — never as good
+> conditions.
 
 ---
 
