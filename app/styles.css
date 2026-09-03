@@ -143,6 +143,12 @@
 .results .code{font-family:var(--mono);font-size:13px;color:var(--val);min-width:52px}
 .results .nm{font-size:12.5px;color:var(--ink)} .results .sub{color:var(--mut);font-size:11px;margin-left:auto;font-family:var(--mono)}
 .results .zdot{width:9px;height:9px;border-radius:50%;flex:none}
+/* combined search: a small type icon per row + per-type group headers */
+.results .ricon{flex:none;display:flex;align-items:center;justify-content:center;width:20px}
+.results .ricon svg{display:block}
+.results .resgroup{color:var(--mut);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:9px 8px 4px;border-bottom:0;cursor:default}
+.results .resgroup:hover{background:none}
 .dialog .drow{display:flex;justify-content:space-between;margin-top:12px;gap:10px}
 .dialog .cancel{background:none;border:1px solid #23273f;color:var(--mut);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px}
 .dialog .cancel:hover{color:var(--val);border-color:var(--edge)}

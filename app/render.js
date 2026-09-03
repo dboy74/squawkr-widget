@@ -164,8 +164,8 @@ export function heroAf(a) {
 // geometry only — a deliberately neutral, non-status colour so it can never read as an answer.
 const ZCOL = { active: [224, 108, 108], sched: [224, 179, 74], none: [111, 206, 154], unknown: [146, 148, 156], geo: [124, 140, 170] };
 const ZWORD = { active: "ACTIVE", sched: "SCHEDULED", none: "CLEAR", unknown: "UNKNOWN", geo: "ZONE ONLY" };
-const zicon = (sz = 64) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M32 8 54 20v18c0 12-9 18-22 22C19 56 10 50 10 38V20z"/><path d="M24 33l6 6 12-13" stroke-width="2"/></svg>`;
-const fieldicon = (sz = 30) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="27" y="10" width="10" height="44" rx="3"/><line x1="32" y1="16" x2="32" y2="48" stroke-dasharray="3 6"/></svg>`;
+export const zicon = (sz = 64) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M32 8 54 20v18c0 12-9 18-22 22C19 56 10 50 10 38V20z"/><path d="M24 33l6 6 12-13" stroke-width="2"/></svg>`;
+export const fieldicon = (sz = 30) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="27" y="10" width="10" height="44" rx="3"/><line x1="32" y1="16" x2="32" y2="48" stroke-dasharray="3 6"/></svg>`;
 
 // One tracked slot. `isHome` marks the current home field. Buttons carry data-act for app.js.
 export function mini(it, isHome = false) {

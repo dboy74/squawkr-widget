@@ -172,36 +172,54 @@ function addTracked(ref) {
 }
 
 // ---- add / search overlay ------------------------------------------------------------------
-let overlayMode = "af";   // "af" | "zn"
-let znStep = "field";     // for zone add: pick a field, then pick an area near it
-let znBbox = null;
-let searchResults = [];
+// One combined search: a single box searches airfields (global text search) AND restriction
+// zones together. Airfields come from /plugin/search; zones aren't text-searchable server-side
+// (that endpoint is airfields-only and areas are bbox-only), so we prefetch a regional pool of
+// zones on open — the seed area plus a box around the home field — and text-match it client-side.
+let searchResults = [];   // flat: [...airfields, ...zones]; zones carry _zone:true
 let searchSel = 0;
 let searchTimer = null;
+let zonePool = [];        // prefetched restriction zones to text-match against
+let poolLoading = false;
+let lastQuery = "";       // the query the visible results belong to (guards stale async)
+
+const _norm = (s) => String(s == null ? "" : s).toLowerCase().replace(/\s+/g, "");
 
 function openOverlay() {
   if (prefs.tracked.length >= C.MAX_TRACKED) { toast("Tracking " + C.MAX_TRACKED + " already — remove one first"); return; }
-  overlayMode = "af"; znStep = "field"; searchResults = []; searchSel = 0;
+  searchResults = []; searchSel = 0; lastQuery = "";
   el("overlay").hidden = false;
   drawOverlay();
   setTimeout(() => $("#overlay .field")?.focus(), 20);
+  loadZonePool();
 }
 function closeOverlay() { el("overlay").hidden = true; }
 
+// Gather a regional pool of zones to search by name/designator: the seed bbox plus a box around
+// the home field (so wherever the user has based themselves, their local zones are searchable).
+async function loadZonePool() {
+  poolLoading = true;
+  const bboxes = [C.SEED_BBOX];
+  if (homeCard && Number.isFinite(homeCard.lat) && Number.isFinite(homeCard.lon)) {
+    const pad = 1.2;
+    bboxes.push([homeCard.lon - pad, homeCard.lat - pad, homeCard.lon + pad, homeCard.lat + pad].map((n) => n.toFixed(3)).join(","));
+  }
+  try {
+    const lists = await Promise.all(bboxes.map((b) => api.areas(b).catch(() => [])));
+    const seen = new Set(), pool = [];
+    for (const list of lists) for (const z of list) { if (!seen.has(z.desig)) { seen.add(z.desig); pool.push(z); } }
+    zonePool = pool;
+  } catch { zonePool = []; }
+  poolLoading = false;
+  if (lastQuery.trim()) runSearch(lastQuery);   // fold zones in if the user typed while loading
+}
+
 function drawOverlay() {
-  const zn = overlayMode === "zn";
-  const hint = !zn ? "Search by ICAO or name, then pick a field to track."
-    : znStep === "field" ? "First pick a field — we'll list the restriction areas around it."
-    : "Pick a restriction area near " + (znBbox?.label || "the field") + ".";
   el("overlay").innerHTML = `
     <div class="dialog">
       <h3>Add to your widget</h3>
-      <p class="hint">${hint}</p>
-      <div class="seg">
-        <button data-mode="af" class="${!zn ? "on" : ""}">Airfield</button>
-        <button data-mode="zn" class="${zn ? "on" : ""}">Restriction zone</button>
-      </div>
-      ${zn && znStep === "area" ? "" : `<input class="field" placeholder="${zn ? "Field near the zone (e.g. ESSV)" : "e.g. ESSA, Arlanda"}" autocomplete="off">`}
+      <p class="hint">Search airfields and restriction zones — an ICAO, a place, or a zone name.</p>
+      <input class="field" placeholder="e.g. ESSA · Visby · R28" autocomplete="off">
       <ul class="results"></ul>
       <div class="drow"><span></span><button class="cancel" data-cancel>Cancel (Esc)</button></div>
     </div>`;
@@ -210,39 +228,59 @@ function drawOverlay() {
 
 function drawResults() {
   const ul = $("#overlay .results"); if (!ul) return;
-  if (!searchResults.length) { ul.innerHTML = `<li class="emptymsg" style="cursor:default">Type to search…</li>`; return; }
-  ul.innerHTML = searchResults.map((r, i) => {
-    if (r._zone) {
-      const col = { active: "#e06c6c", sched: "#e0b34a", none: "#6fce9a", unknown: "#9294a0", geo: "#7c8caa" }[r.status] || "#9294a0";
-      return `<li data-i="${i}" class="${i === searchSel ? "sel" : ""}"><span class="zdot" style="background:${col}"></span><span class="code">${R.esc(r.desig)}</span><span class="nm">${R.esc(r.name || "")}</span><span class="sub">${R.esc((r.lo || "GND") + "–" + (r.hi || "UNL"))}</span></li>`;
+  if (!lastQuery.trim()) { ul.innerHTML = `<li class="emptymsg" style="cursor:default">Type to search airfields and zones…</li>`; return; }
+  if (!searchResults.length) {
+    const tail = poolLoading ? "" : "";
+    ul.innerHTML = `<li class="emptymsg" style="cursor:default">No airfields or zones match “${R.esc(lastQuery)}”.${tail}</li>`;
+    return;
+  }
+  let html = "", lastType = null;
+  searchResults.forEach((r, i) => {
+    const type = r._zone ? "zn" : "af";
+    if (type !== lastType) {
+      html += `<li class="resgroup" style="cursor:default">${type === "af" ? "Airfields" : "Restriction zones"}</li>`;
+      lastType = type;
     }
-    return `<li data-i="${i}" class="${i === searchSel ? "sel" : ""}"><span class="code">${R.esc(r.icao)}</span><span class="nm">${R.esc(r.name || "")}</span>${r.iata ? `<span class="sub">${R.esc(r.iata)}</span>` : ""}</li>`;
-  }).join("");
+    const on = i === searchSel ? " sel" : "";
+    if (r._zone) {
+      const zc = R.ZCOL[r.status] || [146, 148, 156];
+      html += `<li data-i="${i}" class="${on.trim()}"><span class="ricon" style="color:rgb(${zc.join(",")})">${R.zicon(18)}</span>` +
+        `<span class="code">${R.esc(r.desig)}</span><span class="nm">${R.esc(r.name || "")}</span>` +
+        `<span class="sub">${R.esc((r.lo || "GND") + "–" + (r.hi || "UNL"))}</span></li>`;
+    } else {
+      html += `<li data-i="${i}" class="${on.trim()}"><span class="ricon" style="color:var(--big)">${R.fieldicon(18)}</span>` +
+        `<span class="code">${R.esc(r.icao)}</span><span class="nm">${R.esc(r.name || "")}</span>` +
+        `${r.iata ? `<span class="sub">${R.esc(r.iata)}</span>` : ""}</li>`;
+    }
+  });
+  ul.innerHTML = html;
 }
+
+function scrollSelIntoView() { $("#overlay .results li.sel")?.scrollIntoView({ block: "nearest" }); }
 
 async function runSearch(q) {
-  if (overlayMode === "zn" && znStep === "area") return;
+  lastQuery = q;
   if (!q.trim()) { searchResults = []; drawResults(); return; }
-  try {
-    const res = await api.search(q, 12);
-    searchResults = res; searchSel = 0; drawResults();
-  } catch { searchResults = []; drawResults(); }
+  const nq = _norm(q);
+  let afs = [];
+  try { afs = await api.search(q, 8); } catch {}
+  if (lastQuery !== q) return;   // a newer keystroke already superseded this
+  const zns = (zonePool || [])
+    .filter((z) => _norm(z.desig).includes(nq) || _norm(z.name).includes(nq))
+    .slice(0, 8);
+  searchResults = [
+    ...afs.map((a) => ({ ...a, _zone: false })),
+    ...zns.map((z) => ({ ...z, _zone: true })),
+  ];
+  searchSel = 0;
+  drawResults();
 }
 
-async function pickResult(i) {
+function pickResult(i) {
   const r = searchResults[i]; if (!r) return;
-  if (r._zone) { addTracked({ kind: "zn", id: r.id, bbox: r.bbox, desig: r.desig, name: r.name }); closeOverlay(); return; }
-  if (overlayMode === "af") { addTracked({ kind: "af", icao: r.icao, name: r.name }); closeOverlay(); return; }
-  // zone mode: a field was picked — list areas in a bbox around it
-  const pad = 0.8;
-  const bbox = [r.lon - pad, r.lat - pad, r.lon + pad, r.lat + pad].map((n) => n.toFixed(3)).join(",");
-  znBbox = { bbox, label: r.icao };
-  znStep = "area";
-  try {
-    const zs = await api.areas(bbox);
-    searchResults = zs.map((z) => ({ ...z, _zone: true })); searchSel = 0;
-  } catch { searchResults = []; }
-  drawOverlay();
+  if (r._zone) addTracked({ kind: "zn", id: r.id, bbox: r.bbox, desig: r.desig, name: r.name });
+  else addTracked({ kind: "af", icao: r.icao, name: r.name });
+  closeOverlay();
 }
 
 // ---- event wiring --------------------------------------------------------------------------
@@ -273,8 +311,6 @@ document.addEventListener("click", (e) => {
   if (go) { show(go.dataset.go); return; }
   if (e.target.closest("[data-back]")) { show("v-home"); return; }
   // overlay
-  const mode = e.target.closest("[data-mode]");
-  if (mode) { overlayMode = mode.dataset.mode; znStep = "field"; searchResults = []; drawOverlay(); setTimeout(() => $("#overlay .field")?.focus(), 20); return; }
   if (e.target.closest("[data-cancel]")) { closeOverlay(); return; }
   const li = e.target.closest("#overlay .results li[data-i]");
   if (li) { pickResult(+li.dataset.i); return; }
@@ -293,8 +329,8 @@ document.addEventListener("keydown", (e) => {
   const overlayOpen = !el("overlay").hidden;
   if (overlayOpen) {
     if (e.key === "Escape") { closeOverlay(); return; }
-    if (e.key === "ArrowDown") { searchSel = Math.min(searchSel + 1, searchResults.length - 1); drawResults(); e.preventDefault(); }
-    else if (e.key === "ArrowUp") { searchSel = Math.max(searchSel - 1, 0); drawResults(); e.preventDefault(); }
+    if (e.key === "ArrowDown") { searchSel = Math.min(searchSel + 1, searchResults.length - 1); drawResults(); scrollSelIntoView(); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { searchSel = Math.max(searchSel - 1, 0); drawResults(); scrollSelIntoView(); e.preventDefault(); }
     else if (e.key === "Enter") { if (searchResults.length) pickResult(searchSel); e.preventDefault(); }
     return;
   }

@@ -79,8 +79,10 @@ Then click the Squawkr mark in your bar.
 ## Usage
 
 - **Click the bar icon** to open the panel; click again to close it (standard toolbar-panel toggle).
-- **Add** an airfield or area with `a` (or the **+** card); **set a home** field with `h`; **remove**
-  a tracked item with `x`; **open** a detail with `↵`; go **back** with `Esc`.
+- **Add** with `a` (or the **+** card): one search box covers **both** airfields and restriction
+  zones — type an ICAO, a place, or a zone name (e.g. `ESSA`, `Visby`, `R28`) and pick from the
+  combined results. **Set a home** field with `h`; **remove** a tracked item with `x`; **open** a
+  detail with `↵`; go **back** with `Esc`.
 - The **"Full airspace & forecasts →"** link opens the full service in your browser and closes the
   panel.
 
