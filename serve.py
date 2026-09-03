@@ -48,6 +48,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *a, **k):
         super().__init__(*a, directory=DIRECTORY, **k)
 
+    def end_headers(self):
+        # Never serve a stale panel. The app is tiny and same-origin, so freshness beats caching:
+        # without this, chromium keeps the old JS/CSS after an update and the UI looks unchanged
+        # until a manual hard-reload. no-store makes every open fetch the current files.
+        self.send_header("Cache-Control", "no-store, max-age=0")
+        super().end_headers()
+
     def _noContent(self):
         self.send_response(204)
         self.send_header("Content-Length", "0")
