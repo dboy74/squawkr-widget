@@ -36,16 +36,73 @@ async function fetchCard(ref) {
   } catch { return ref.kind === "af" ? { kind: "af", icao: ref.icao, name: ref.name || ref.icao, catc: [146,148,156], runways: [], clouds: [] } : { ...ref, status: "unknown", week: "NNNNNNN" }; }
 }
 
+// First-run home is location-aware WITHOUT a permission prompt: the browser's IANA timezone maps
+// to an approximate lat/lon, and we seed the nearest airfield to it. (Berlin used to get Visby.)
+// Coarse by design but far better than one hardcoded field; override precisely with C.SEED_COORDS,
+// and the user can always press `h` to set home. A precise fix would be a backend /geo endpoint
+// using Cloudflare's request geo — see the widget notes.
+const TZ_COORDS = {
+  "Europe/Stockholm":[59.33,18.06],"Europe/Berlin":[52.52,13.40],"Europe/London":[51.51,-0.13],
+  "Europe/Paris":[48.86,2.35],"Europe/Amsterdam":[52.37,4.90],"Europe/Brussels":[50.85,4.35],
+  "Europe/Madrid":[40.42,-3.70],"Europe/Lisbon":[38.72,-9.14],"Europe/Rome":[41.90,12.50],
+  "Europe/Zurich":[47.37,8.54],"Europe/Vienna":[48.21,16.37],"Europe/Prague":[50.09,14.42],
+  "Europe/Warsaw":[52.23,21.01],"Europe/Copenhagen":[55.68,12.57],"Europe/Oslo":[59.91,10.75],
+  "Europe/Helsinki":[60.17,24.94],"Europe/Dublin":[53.35,-6.26],"Europe/Athens":[37.98,23.73],
+  "Europe/Budapest":[47.50,19.04],"Europe/Bucharest":[44.43,26.10],"Europe/Sofia":[42.70,23.32],
+  "Europe/Belgrade":[44.80,20.47],"Europe/Zagreb":[45.81,15.98],"Europe/Vilnius":[54.69,25.28],
+  "Europe/Riga":[56.95,24.11],"Europe/Tallinn":[59.44,24.75],"Europe/Kyiv":[50.45,30.52],
+  "Europe/Moscow":[55.76,37.62],"Europe/Istanbul":[41.01,28.98],"Europe/Madrid ":[40.42,-3.70],
+  "Atlantic/Reykjavik":[64.15,-21.94],"Atlantic/Canary":[28.10,-15.42],
+  "America/New_York":[40.71,-74.01],"America/Chicago":[41.88,-87.63],"America/Denver":[39.74,-104.99],
+  "America/Los_Angeles":[34.05,-118.24],"America/Phoenix":[33.45,-112.07],"America/Toronto":[43.65,-79.38],
+  "America/Vancouver":[49.28,-123.12],"America/Sao_Paulo":[-23.55,-46.63],"America/Mexico_City":[19.43,-99.13],
+  "America/Bogota":[4.71,-74.07],"America/Buenos_Aires":[-34.60,-58.38],"America/Argentina/Buenos_Aires":[-34.60,-58.38],
+  "America/Anchorage":[61.22,-149.90],"America/Halifax":[44.65,-63.57],
+  "Asia/Tokyo":[35.68,139.69],"Asia/Shanghai":[31.23,121.47],"Asia/Hong_Kong":[22.32,114.17],
+  "Asia/Singapore":[1.35,103.82],"Asia/Seoul":[37.57,126.98],"Asia/Bangkok":[13.76,100.50],
+  "Asia/Kolkata":[28.61,77.21],"Asia/Dubai":[25.20,55.27],"Asia/Jerusalem":[31.77,35.21],
+  "Asia/Tel_Aviv":[32.08,34.78],"Asia/Riyadh":[24.71,46.68],"Asia/Jakarta":[-6.21,106.85],
+  "Asia/Manila":[14.60,120.98],"Asia/Karachi":[24.86,67.01],"Asia/Taipei":[25.03,121.57],
+  "Australia/Sydney":[-33.87,151.21],"Australia/Melbourne":[-37.81,144.96],"Australia/Brisbane":[-27.47,153.03],
+  "Australia/Perth":[-31.95,115.86],"Pacific/Auckland":[-36.85,174.76],
+  "Africa/Johannesburg":[-26.20,28.05],"Africa/Cairo":[30.04,31.24],"Africa/Nairobi":[-1.29,36.82],
+  "Africa/Lagos":[6.52,3.38],"Africa/Casablanca":[33.57,-7.59],
+};
+
+function guessCoords() {
+  if (Array.isArray(C.SEED_COORDS) && C.SEED_COORDS.length === 2) return { lat: +C.SEED_COORDS[0], lon: +C.SEED_COORDS[1] };
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const c = TZ_COORDS[tz];
+    if (c) return { lat: c[0], lon: c[1] };
+  } catch {}
+  return null;
+}
+const _bboxAround = (lat, lon, dLon, dLat) =>
+  [(lon - dLon).toFixed(2), (lat - dLat).toFixed(2), (lon + dLon).toFixed(2), (lat + dLat).toFixed(2)].join(",");
+const _nearest = (list, lat, lon) =>
+  [...list].sort((a, b) => ((a.lat - lat) ** 2 + (a.lon - lon) ** 2) - ((b.lat - lat) ** 2 + (b.lon - lon) ** 2));
+
 async function seedIfNeeded() {
   if (prefs) return;
-  prefs = { home: C.SEED_HOME, tracked: [] };
+  // 1) pick a home from the guessed location (fallback: the configured SEED_HOME, over Gotland)
+  let home = C.SEED_HOME, hlat = 57.66, hlon = 18.35;
+  const g = guessCoords();
+  if (g) {
+    try {
+      const near = _nearest(await api.airfields(_bboxAround(g.lat, g.lon, 3, 2)), g.lat, g.lon);
+      if (near[0] && near[0].icao) { home = near[0].icao; hlat = near[0].lat; hlon = near[0].lon; }
+    } catch {}
+  }
+  prefs = { home, tracked: [] };
+  // 2) a second nearby field to track
   try {
-    const near = (await api.airfields(C.SEED_FIELD_BBOX)).filter((x) => x.icao !== C.SEED_HOME);
-    near.sort((a, b) => ((a.lat - 57.66) ** 2 + (a.lon - 18.35) ** 2) - ((b.lat - 57.66) ** 2 + (b.lon - 18.35) ** 2));
+    const near = _nearest((await api.airfields(_bboxAround(hlat, hlon, 3, 2))).filter((x) => x.icao !== home), hlat, hlon);
     if (near[0]) prefs.tracked.push({ kind: "af", icao: near[0].icao, name: near[0].name });
   } catch {}
+  // 3) a nearby restriction zone if one exists in coverage (none e.g. in Berlin — that's fine)
   try {
-    const zs = await api.areas(C.SEED_BBOX);
+    const zs = await api.areas(_bboxAround(hlat, hlon, 1.0, 0.6));
     if (zs[0]) prefs.tracked.push({ kind: "zn", id: zs[0].id, bbox: zs[0].bbox, desig: zs[0].desig, name: zs[0].name });
   } catch {}
   savePrefs();

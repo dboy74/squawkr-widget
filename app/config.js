@@ -11,7 +11,10 @@ window.SQUAWKR_CONFIG = {
   SEED_BBOX: "18.0,57.0,19.6,58.0",
   // A wider bbox to search nearby airfields for the first-run "nearest field" seed.
   SEED_FIELD_BBOX: "17.5,57.0,19.6,58.2",
-  SEED_HOME: "ESSV", // Visby — the home field seeded on first run
+  SEED_HOME: "ESSV", // Visby — the ultimate first-run fallback if the location guess fails
+  // First-run home is location-aware (prompt-free): the browser's timezone → nearest airfield.
+  // Set SEED_COORDS to [lat, lon] to force a location, or leave null to auto-detect.
+  SEED_COORDS: null,
 
   REFRESH_MS: 90_000, // live refresh cadence; also refreshes on panel open
   // Past this age (minutes) a value is shown as "unknown", never as a current answer
