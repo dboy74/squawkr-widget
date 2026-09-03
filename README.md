@@ -1,30 +1,29 @@
 # Squawkr — Omarchy widget ✈️
 
-**Calling every Omarchy tiling-window devotee who also happens to look up.** If you fly — GA,
+**Calling every Omarchy tiling-window devotee who also happens to look up.** If you fly — light aircraft,
 gliders, drones, or you just love watching the sky — this one's for you.
 
 Squawkr lives in your [Omarchy](https://omarchy.org) / Hyprland status bar and answers, at a
 glance, the two questions a pilot actually asks before heading out:
-**"is this Swedish restriction area active right now, and what's the weather at my airfield?"**
-No tab-hunting, no ForeFlight detour — just a click on your bar between commits. It's a free,
-at-a-glance companion to the full [Squawkr](https://squawkr.net) service.
+**"what restriction zones exist nearby, and what's the weather at my airfield?"**
+No tab-hunting, no detours — just a click on your bar between commits. It's a free,
+at-a-glance companion to the full [Squawkr](https://squawkr.net) service which is launching soon!
 
 Click the Squawkr mark in your bar and a compact panel drops down: your **home airfield** (wind,
-favoured runway, sky) plus up to a few **tracked** airfields and restriction areas, each with its
-live status. Add and remove what you follow; open any item for a fuller view; jump to the full
+favoured runway, sky) plus up to a few **tracked** airfields and restriction areas. 
+
+Add and remove what you follow; open any item for a fuller view; jump to the full
 service for the rest.
 
 ![The Squawkr panel — home airfield plus tracked airfields and restriction areas](assets/panel-home.png)
 
 > [!IMPORTANT]
 > **Not an official flight-briefing source.** Squawkr is an at-a-glance convenience, not a substitute
-> for a briefing. Always verify restriction-area activation via **LFV AROWeb** (<https://aro.lfv.se>)
-> and on-site signage, and weather from official METAR/TAF, before you fly.
+> for a briefing. Always verify restriction-area activation and on-site signage, and weather from official METAR/TAF, before you fly.
 >
 > **Coverage:** weather and airfield data are worldwide. Live restriction-area **activation status**
 > is currently **Sweden only** (the United States follows once its official feed is live). Outside a
-> covered territory the widget shows an airspace's **boundary and vertical limits only** — clearly
-> marked *zone only*, never a red/amber/green status — because it has no activation feed there.
+> covered territory the widget shows an airspace's **boundary and vertical limits only** 
 >
 > **Missing weather:** when a field has no current observation it reads **"no report"**, and with no
 > forecast, **"No forecast available."** Missing data is always shown as unknown — never as good
