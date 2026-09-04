@@ -36,11 +36,8 @@ async function fetchCard(ref) {
   } catch { return ref.kind === "af" ? { kind: "af", icao: ref.icao, name: ref.name || ref.icao, catc: [146,148,156], runways: [], clouds: [] } : { ...ref, status: "unknown", week: "NNNNNNN" }; }
 }
 
-// First-run home is location-aware WITHOUT a permission prompt: the browser's IANA timezone maps
-// to an approximate lat/lon, and we seed the nearest airfield to it. (Berlin used to get Visby.)
-// Coarse by design but far better than one hardcoded field; override precisely with C.SEED_COORDS,
-// and the user can always press `h` to set home. A precise fix would be a backend /geo endpoint
-// using Cloudflare's request geo — see the widget notes.
+// Fallback location table for the first-run home guess when /plugin/geo (Cloudflare edge geo) is
+// unavailable: the browser's IANA timezone → an approximate lat/lon. Coarse but prompt-free.
 const TZ_COORDS = {
   "Europe/Stockholm":[59.33,18.06],"Europe/Berlin":[52.52,13.40],"Europe/London":[51.51,-0.13],
   "Europe/Paris":[48.86,2.35],"Europe/Amsterdam":[52.37,4.90],"Europe/Brussels":[50.85,4.35],
@@ -69,14 +66,28 @@ const TZ_COORDS = {
   "Africa/Lagos":[6.52,3.38],"Africa/Casablanca":[33.57,-7.59],
 };
 
-function guessCoords() {
-  if (Array.isArray(C.SEED_COORDS) && C.SEED_COORDS.length === 2) return { lat: +C.SEED_COORDS[0], lon: +C.SEED_COORDS[1] };
+function tzCoords() {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const c = TZ_COORDS[tz];
     if (c) return { lat: c[0], lon: c[1] };
   } catch {}
   return null;
+}
+
+// First-run location sources, best → coarsest. The first that yields a nearby airfield wins;
+// otherwise SEED_HOME. 1) C.SEED_COORDS override; 2) /plugin/geo — Cloudflare's rough request
+// location (prompt-free, city-level, stores nothing); 3) browser timezone → representative city.
+async function locationCandidates() {
+  const out = [];
+  if (Array.isArray(C.SEED_COORDS) && C.SEED_COORDS.length === 2) out.push({ lat: +C.SEED_COORDS[0], lon: +C.SEED_COORDS[1] });
+  try {
+    const g = await api.geo();
+    if (g && g.source === "cloudflare" && isFinite(+g.lat) && isFinite(+g.lon)) out.push({ lat: +g.lat, lon: +g.lon });
+  } catch {}
+  const tz = tzCoords();
+  if (tz) out.push(tz);
+  return out;
 }
 const _bboxAround = (lat, lon, dLon, dLat) =>
   [(lon - dLon).toFixed(2), (lat - dLat).toFixed(2), (lon + dLon).toFixed(2), (lat + dLat).toFixed(2)].join(",");
@@ -85,13 +96,13 @@ const _nearest = (list, lat, lon) =>
 
 async function seedIfNeeded() {
   if (prefs) return;
-  // 1) pick a home from the guessed location (fallback: the configured SEED_HOME, over Gotland)
+  // 1) pick a home from the best available location; first source with a nearby field wins,
+  //    else the configured SEED_HOME over Gotland.
   let home = C.SEED_HOME, hlat = 57.66, hlon = 18.35;
-  const g = guessCoords();
-  if (g) {
+  for (const c of await locationCandidates()) {
     try {
-      const near = _nearest(await api.airfields(_bboxAround(g.lat, g.lon, 3, 2)), g.lat, g.lon);
-      if (near[0] && near[0].icao) { home = near[0].icao; hlat = near[0].lat; hlon = near[0].lon; }
+      const near = _nearest(await api.airfields(_bboxAround(c.lat, c.lon, 3, 2)), c.lat, c.lon);
+      if (near[0] && near[0].icao) { home = near[0].icao; hlat = near[0].lat; hlon = near[0].lon; break; }
     } catch {}
   }
   prefs = { home, tracked: [] };

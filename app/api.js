@@ -131,6 +131,13 @@ export async function airfields(bbox) {
   return j.data || [];
 }
 
+// Rough request location from the backend (Cloudflare edge geo — prompt-free, city-level, stores
+// nothing). Shape: {lat,lon,city,region,country,source}. source is "cloudflare" when lat/lon are
+// present, else "unavailable". Used only for the first-run home guess.
+export async function geo() {
+  return await _get("/plugin/geo");
+}
+
 // ---- zones ---------------------------------------------------------------------------------
 function _zoneStatus(p) {
   const s = (p.status || "").toLowerCase();
