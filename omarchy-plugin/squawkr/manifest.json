@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "squawkr.panel",
   "name": "Squawkr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "RW 03 AB",
   "description": "Airspace activation & airfield weather — opens the Squawkr panel",
   "kinds": ["bar-widget"],

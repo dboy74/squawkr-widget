@@ -36,7 +36,8 @@ service for the rest.
 - A **Squawkr mark in the status bar**; click it to toggle the panel.
 - A **home airfield** at the top — condition, wind (bearing + strength), favoured runway with
   crosswind, QNH — and up to three **tracked** airfields / restriction areas below.
-- **Airfield detail:** a 2-D runway with a wind chevron + sky interpretation.
+- **Airfield detail:** a 2-D runway with a wind chevron + sky interpretation — decoded values only;
+  the raw METAR/TAF text is left to the full report, so it can't overflow the panel.
 - **Restriction-area detail:** a vertical-limits meter + the week's activation schedule where we
   have a status feed (Sweden today), or a plain *zone only* boundary-and-limits view where we don't.
 - **Keyboard:** `a` add · `h` set home · `x` remove · `↵` open · `Esc` back.
@@ -75,6 +76,9 @@ Run `./install.sh` **without** `--wire` to copy the files and *print* the two co
 to add by hand instead.
 
 Then click the Squawkr mark in your bar.
+
+**Updating:** `git pull && ./install.sh --wire` — the installer refreshes the installed files, brings
+the Hyprland rule block up to date, and closes a running panel so the next click loads the new version.
 
 ## Usage
 

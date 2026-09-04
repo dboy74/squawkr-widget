@@ -120,7 +120,8 @@ export async function airfield(icao) {
     temp: metar.tempC, dew: metar.dewpointC, vis: metar.visibility,
     qnh: metar.altimeterHpa, obs: _obsTime(metar.observedAt, d.timeZone),
     clouds: metar.clouds || [], runways: d.runways || [],
-    raw_metar: metar.raw, raw_taf: (d.taf || {}).raw,
+    // The raw METAR/TAF text is deliberately NOT carried into the panel: only whether each exists.
+    has_metar: !!metar.raw, has_taf: !!((d.taf || {}).raw),
     tz: d.timeZone, lat: d.lat, lon: d.lon, stale: !!w.stale, refreshing: !!w.refreshing,
   };
 }

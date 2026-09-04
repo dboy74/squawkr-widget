@@ -9,10 +9,13 @@
   *{box-sizing:border-box}
   /* The window IS the panel — no desktop backdrop, no outer border/toolbar. */
   html,body{height:100%}
+  /* The window IS the panel frame (sized by the Hyprland rule): nothing may ever widen it. Long
+     strings wrap anywhere; the frame clips; grid/flex children may shrink (min-width:0). */
   body{margin:0;background:var(--panel);color:var(--ink);font-family:var(--sans);
-    -webkit-font-smoothing:antialiased}
-  .stage{min-height:100%}
-  .panel{position:relative;background:var(--panel);padding:16px 18px;overflow:hidden}
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;overflow-wrap:anywhere}
+  .stage{min-height:100%;max-width:100%;overflow:hidden}
+  .panel{position:relative;background:var(--panel);padding:16px 18px;overflow:hidden;max-width:100%;min-width:0}
+  .panel *{min-width:0}
   .phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .brand{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;letter-spacing:.14em}
   .brand .logo{height:16px;width:auto;color:var(--big);display:block}
@@ -25,7 +28,7 @@
   .headline .afname{color:var(--strong);font-size:25px;font-weight:600;line-height:1.08;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
   .subl{color:var(--mut);font-size:12.5px;margin-top:6px} .home{margin-left:8px;font-size:9.5px;letter-spacing:.14em;color:#7f86a8;border:1px solid var(--edge);border-radius:4px;padding:1px 5px}
   .stats{display:flex;gap:18px}
-  .stat .lbl{color:var(--mut);font-size:10px;letter-spacing:.11em;font-weight:500}
+  .stat .lbl{color:var(--mut);font-size:10px;letter-spacing:.11em;font-weight:500;white-space:nowrap}
   .stat .val{color:var(--val);font-size:15px;margin-top:4px;font-family:var(--mono);white-space:nowrap}
   .stat .sub{color:var(--mut);font-size:12px;margin-top:2px;font-family:var(--mono)}
   .ar{color:var(--big)}
@@ -38,7 +41,8 @@
   .mini .x:hover{color:var(--val)} .micon svg{display:block}
   .mini .hbtn{position:absolute;top:5px;right:24px;background:none;border:0;color:var(--mut);font-size:13px;cursor:pointer;line-height:1}
   .mini .hbtn:hover{color:var(--big)}
-  .mid b{font-size:13.5px;font-weight:600} .mlbl{color:var(--mut);font-size:10.5px;display:block}
+  .mid b{font-size:13.5px;font-weight:600}
+  .mlbl{color:var(--mut);font-size:10.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mval{font-size:12.5px;font-weight:500} .msub{color:var(--mut);font-size:10.5px;font-family:var(--mono)}
   .add{border:1px dashed #2c3150;border-radius:10px;display:flex;flex-direction:column;align-items:center;
     justify-content:center;color:var(--mut);gap:4px;min-width:80px;cursor:pointer;background:var(--surface2)}
@@ -51,30 +55,30 @@
   .svc{color:#8b93c8;font-size:11.5px;text-decoration:none;border-bottom:1px dotted #3a3f66}
   .svc:hover{color:var(--big)}
   /* detail */
-  .detail{margin-top:0}
-  .dhead{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--edge)}
+  /* Detail views must fit the 600x384 window WITHOUT scrolling: tighter vertical rhythm than the
+     home view, and the two tall SVGs (runway strip / height meter) drawn ~7% smaller. */
+  .detail{margin-top:0;padding-top:12px;padding-bottom:12px}
+  .dhead{display:flex;align-items:center;gap:14px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--edge)}
   .back{background:var(--panel);border:1px solid var(--edge);border-radius:7px;color:var(--val);font-size:12.5px;cursor:pointer;padding:5px 11px;flex:none}
   .back:hover{border-color:var(--big);color:var(--big)}
-  .dtitle{font-size:17px;flex:1;letter-spacing:.01em}
+  .dtitle{font-size:17px;flex:1;letter-spacing:.01em;min-width:0;overflow-wrap:anywhere}
   .dtitle b{color:var(--strong);font-weight:600} .tsub{color:var(--mut);font-weight:400;font-size:14px}
   .pill{border:1px solid;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600}
-  .afbody{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
-  .rwybox{text-align:center}
+  .afbody{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
+  .rwybox{text-align:center} .rwybox svg{height:200px;width:auto}
   .rwynum{fill:var(--ink);font:600 15px var(--mono);text-anchor:middle}
   .chev{opacity:.22;animation:flow 1.6s linear infinite}
   @keyframes flow{0%,18%{opacity:1}45%,100%{opacity:.2}}
   @media (prefers-reduced-motion: reduce){.chev{animation:none;opacity:.5}}
   .fcap{color:var(--mut);font-size:11px;margin-top:2px;font-family:var(--mono)}
-  .afgrid{display:flex;flex-direction:column;gap:0;padding-top:2px}
-  .skyhead{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+  .afgrid{display:flex;flex-direction:column;gap:0;padding-top:2px;min-width:0;overflow-wrap:anywhere}
+  .skyhead{display:flex;align-items:center;gap:14px;margin-bottom:8px}
   .skytext .skyt{color:var(--strong);font-size:16px;font-weight:500}
   .skytext .skys{color:var(--mut);font-size:12px;margin-top:3px;font-family:var(--mono)}
-  .dr{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--edge)}
+  .dr{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--edge)}
   .dr:last-child{border-bottom:0}
-  .dr .lbl{color:var(--mut);font-size:10px;letter-spacing:.1em}
-  .dr .dv{color:var(--val);font-size:13.5px;font-family:var(--mono);text-align:right}
-  .raw{font-family:var(--mono);font-size:11px;color:#8990b6;background:var(--surface2);border:1px solid var(--edge);
-    border-radius:7px;padding:8px 10px;margin-top:10px;overflow-x:auto;white-space:pre-wrap}
+  .dr .lbl{color:var(--mut);font-size:10px;letter-spacing:.1em;flex:none;white-space:nowrap;margin-right:12px}
+  .dr .dv{color:var(--val);font-size:13.5px;font-family:var(--mono);text-align:right;min-width:0;overflow-wrap:anywhere}
   .zmeta{display:flex;gap:26px;margin-bottom:14px;font-size:13px;color:var(--val);font-family:var(--mono)}
   .zmeta .lbl{color:var(--mut);font-size:9.5px;letter-spacing:.1em;display:block}
   .sched{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:14px}
@@ -82,26 +86,26 @@
   .day.today{background:var(--hover);outline:1px solid var(--edge)}
   .dow{color:var(--mut);font-size:10px;font-weight:600} .dnum{color:var(--ink);font-size:14px;font-family:var(--mono)}
   .bar{width:70%;height:6px;border-radius:3px}
-  .win{font-family:var(--mono);font-size:12px;color:var(--val);margin:4px 0}
+  .win{font-family:var(--mono);font-size:12px;color:var(--val);margin:4px 0;overflow-wrap:anywhere}
   .win .wlab{color:var(--mut);display:inline-block;width:40px}
-  .zbody{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
-  .hmeterbox{text-align:center}
+  .zbody{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start}
+  .zright{min-width:0;overflow-wrap:anywhere}
+  .hmeterbox{text-align:center} .hmeterbox svg{height:204px;width:auto}
   .zup{margin-bottom:12px;font-family:var(--mono);font-size:13px;color:var(--val)}
-  .zup .lbl{color:var(--mut);font-size:9.5px;letter-spacing:.1em;display:block;margin-bottom:3px}
+  .zup .lbl{color:var(--mut);font-size:9.5px;letter-spacing:.1em;display:block;margin-bottom:3px;white-space:nowrap}
   .hlbl{fill:var(--val);font:600 12px var(--mono)} .hlbl.hi{fill:var(--ink)} .hlbl.lo{fill:var(--mut);font-weight:400;font-size:11px}
   .norep{color:var(--mut);font-size:13px;line-height:1.5}
   .norep b{color:var(--val);font-weight:500}
   .norep--sm{font-size:12px}
   .norep--hero{font-size:12.5px;font-family:var(--mono);margin-top:8px}
-  /* forecast (TAF) block — raw TAF when present, standard "no forecast" text when not */
-  .fcast{margin-top:14px}
-  .fcast .flabel{color:var(--mut);font-size:10px;letter-spacing:.1em;margin-bottom:7px}
-  .fcast .raw{margin-top:0}
+  /* forecast (TAF) block — one line: forecast issued (see full report) / standard "no forecast" */
+  .fcast{margin-top:8px}
+  .fcast .flabel{color:var(--mut);font-size:10px;letter-spacing:.1em;margin-bottom:4px}
   .geonote{color:var(--mut);font-size:12.5px;line-height:1.55;border-left:2px solid #4a536e;
     padding-left:10px;margin-top:2px}
   .geonote b{color:var(--val);font-weight:500} .geonote em{color:#aab2cc;font-style:normal}
   .rwylist{margin-top:12px} .rwylist .dr .dv{color:var(--ink)}
-  .dfoot{display:flex;justify-content:flex-end;margin-top:10px;padding-top:9px;border-top:1px solid var(--edge)}
+  .dfoot{display:flex;justify-content:flex-end;margin-top:6px;padding-top:6px;border-top:1px solid var(--edge)}
   .dfoot--split{justify-content:space-between;align-items:baseline} .dfoot--split .meta{margin:0}
 
 /* ============================================================================================

@@ -35,6 +35,16 @@ echo "✓ server     → $(cd "$APP_DST/.." && pwd)/serve.py"
 # 3. the Quickshell bar plugin (logo + click-to-open)
 cp "$SRC"/omarchy-plugin/squawkr/{manifest.json,BarWidget.qml,squawkr-mark.svg} "$PLUGINS/squawkr/"
 echo "✓ bar plugin → $PLUGINS/squawkr/"
+
+# 4. a running panel keeps the OLD app in memory (the window stays alive between toggles), and a
+#    running serve.py is the old server — close both so the next click loads what was just
+#    installed. Also drop the app profile's HTTP caches (served no-store, so this is belt and
+#    braces). The [.] keeps pkill from matching this script's own command line.
+PORT="${SQUAWKR_WIDGET_PORT:-8770}"
+if pkill -f "app=http://127.0.0.1:${PORT}/index[.]html" 2>/dev/null; then echo "✓ closed the running panel (next click reopens it with the new app)"; fi
+if pkill -f "squawkr-widget/serve[.]py" 2>/dev/null; then echo "✓ stopped the old serve.py (restarts on next click)"; fi
+CHROME="${XDG_DATA_HOME:-$HOME/.local/share}/squawkr-widget/chrome"
+rm -rf "$CHROME/Default/Cache" "$CHROME/Default/Code Cache" "$CHROME/Default/GPUCache" 2>/dev/null || true
 echo
 
 SHELL_JSON="$HOME/.config/omarchy/shell.json"
@@ -58,6 +68,26 @@ PY
   # 3b. append the Hyprland float/size/dock rule — idempotent. Right-justify below the bar icon:
   #     x = monitor_width - 612 (600px panel + 12px margin). Numeric because the helper centres a
   #     relative "100%-.." move. Fall back to a 1920-wide guess if hyprctl can't be read.
+  #     An older Squawkr block (one without the `workspace = "special:squawkr"` rule the instant
+  #     toggle relies on) is removed line-by-line first, so an update gets the current rules.
+  if grep -q "chrome-127.0.0.1__index.html-Default" "$HYPR" 2>/dev/null && \
+     ! grep -q 'special:squawkr' "$HYPR" 2>/dev/null; then
+    backup "$HYPR"
+    python3 - "$HYPR" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1]); lines = p.read_text().splitlines()
+KEY = "chrome-127.0.0.1__index.html-Default"
+drop = {i for i, l in enumerate(lines) if KEY in l}
+if drop:
+    # also drop the comment lines directly above the first rule (the block's own header)
+    i = min(drop) - 1
+    while i >= 0 and lines[i].lstrip().startswith("--") and "Squawkr" in " ".join(lines[max(0, i - 3):min(drop)]):
+        drop.add(i); i -= 1
+out = [l for i, l in enumerate(lines) if i not in drop]
+p.write_text("\n".join(out).rstrip("\n") + "\n")
+PY
+    echo "  ✓ removed the previous Squawkr rule block from $HYPR (will re-add the current one)"
+  fi
   if ! grep -q "chrome-127.0.0.1__index.html-Default" "$HYPR" 2>/dev/null; then
     backup "$HYPR"
     MON_W="$(hyprctl -j monitors 2>/dev/null | python3 -c 'import sys,json

@@ -69,7 +69,7 @@ const cloud = (sz = 64) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}
 const fog = (sz = 64) => `<svg viewBox="0 0 64 64" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 34a10 10 0 0 1 2-19 14 14 0 0 1 26 4 9 9 0 0 1-2 15H20z"/><line x1="14" y1="44" x2="46" y2="44"/><line x1="20" y1="51" x2="50" y2="51"/></svg>`;
 const condIcon = (cat, sz = 64) => ({ CAVOK: sun, VFR: partly, MVFR: cloud, IFR: fog, LIFR: fog }[cat] || cloud)(sz);
 
-export const hasWx = (a) => !!a.raw_metar;
+export const hasWx = (a) => !!a.has_metar;
 
 // Standard placeholder copy for missing weather — defined once so the wording stays identical
 // across the hero, the mini cards and the detail views. Observation (METAR) and forecast (TAF)
@@ -78,6 +78,7 @@ export const WX_TEXT = {
   noReport: "no report",                                 // compact — mini card / hero label
   noMetar: "No current weather report for this field.",  // detail: no observation
   noTaf: "No forecast available.",                        // detail: no forecast (TAF)
+  tafAvail: "Forecast (TAF) issued — see the full report below.", // detail: a TAF exists (not shown raw)
 };
 
 // ---- vertical runway strip with an animated wind chevron -----------------------------------
@@ -202,11 +203,13 @@ export function mini(it, isHome = false) {
 // ---- detail views --------------------------------------------------------------------------
 const drow = (l, v) => `<div class="dr"><span class="lbl">${l}</span><span class="dv">${v}</span></div>`;
 
-// Forecast (TAF) block for the airfield detail. The raw TAF when we have it; standard text when
-// we don't — shown independently of the METAR, since a field can have one without the other.
+// Forecast (TAF) block for the airfield detail — shown independently of the METAR, since a field
+// can have one without the other. The upstream TAF text itself is never printed here (a raw
+// report is long, unwrappable and pushed the panel past its border); the panel says whether a
+// forecast exists and points at the full report for it, or shows the standard "none" text.
 const forecastBlock = (a) =>
   `<div class="fcast"><div class="flabel">FORECAST</div>` +
-  (a.raw_taf ? `<div class="raw">${esc(a.raw_taf)}</div>`
+  (a.has_taf ? `<div class="norep norep--sm">${WX_TEXT.tafAvail}</div>`
              : `<div class="norep norep--sm">${WX_TEXT.noTaf}</div>`) +
   `</div>`;
 
@@ -340,7 +343,6 @@ export function detailZn(z) {
     const w = z[key];
     if (w && w.schedule) windows += `<div class="win"><span class="wlab">${lab}</span> <span class="wsch">${esc(w.schedule)}</span></div>`;
   }
-  const notam = (z.current || z.next || {}).text;
   return `<div class="panel detail" id="d-${z.id}" hidden>
       <div class="dhead"><button class="back" data-back>‹ back</button>
         <span class="dtitle"><b>${z.desig}</b> · <span class="tsub">${esc(z.name || "")}</span></span>
@@ -351,7 +353,6 @@ export function detailZn(z) {
           <div class="zup"><span class="lbl">UPCOMING</span>${esc(z.when || "—")}</div>
           <div class="sched">${cells}</div>
           ${windows || '<div class="win"><span class="wlab">—</span> no activation window this week</div>'}
-          ${notam ? `<div class="raw">${esc(notam)}</div>` : ""}
         </div>
       </div>
       ${reportFoot(reportHrefZn(z))}
